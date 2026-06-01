@@ -1,0 +1,712 @@
+<div id="app"></div>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600&display=swap');
+:root{
+  --paper:#F6F2EA;--paper-2:#FBF8F2;--card:#FFFFFF;
+  --ink:#211C15;--ink-2:#5C5448;--ink-3:#938B7C;
+  --line:#E4DDD0;--line-2:#D2C9B8;
+  --teal:#0F6E56;--teal-soft:#E1F1EB;--teal-deep:#0A4E3D;
+  --amber:#A8650F;--amber-soft:#F6E9D5;
+  --plum:#5B4A8A;--plum-soft:#ECE7F5;
+  --blue:#1B5E96;--blue-soft:#E1ECF5;
+  --done:#1D8A68;--review:#A8650F;--changes:#B5402F;--changes-soft:#F6E2DD;
+  --font-d:'Fraunces',Georgia,serif;--font-b:'Hanken Grotesk',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--paper);color:var(--ink);font-family:var(--font-b);-webkit-font-smoothing:antialiased}
+#app{min-height:100vh}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.shell{max-width:920px;margin:0 auto;padding:0 24px}
+.btn{font-family:var(--font-b);font-size:14px;font-weight:500;padding:10px 18px;border-radius:10px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--ink-3);transform:translateY(-1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--ink);color:var(--paper-2);border-color:var(--ink)}
+.btn-primary:hover{background:#000}
+.btn-ok{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-ok:hover{background:var(--teal-deep)}
+.btn-warn{background:var(--changes-soft);color:var(--changes);border-color:#E6C3BB}
+.btn-warn:hover{border-color:var(--changes)}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--ink-2)}
+.btn-ghost:hover{background:var(--paper);transform:none}
+.btn-sm{padding:7px 13px;font-size:13px}
+.tag{font-size:11px;font-weight:600;letter-spacing:.03em;padding:3px 9px;border-radius:6px;display:inline-flex;align-items:center;gap:4px}
+
+/* status badge */
+.st{font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.st-progress{background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.st-review{background:var(--amber-soft);color:var(--amber)}
+.st-done{background:var(--teal-soft);color:var(--teal-deep)}
+.st-changes{background:var(--changes-soft);color:var(--changes)}
+
+/* landing */
+.land{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}
+.land-eyebrow{font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:18px}
+.land h1{font-family:var(--font-d);font-weight:500;font-size:clamp(32px,6vw,54px);line-height:1.05;letter-spacing:-.01em;max-width:14ch;margin-bottom:10px}
+.land h1 em{font-style:italic;color:var(--teal)}
+.land p.lead{font-size:16px;color:var(--ink-2);max-width:46ch;line-height:1.6;margin-bottom:40px}
+.roles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;width:100%;max-width:560px}
+.role{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 24px;cursor:pointer;text-align:left;transition:.2s;position:relative;overflow:hidden}
+.role:hover{border-color:var(--ink);transform:translateY(-3px);box-shadow:0 12px 30px -18px rgba(33,28,21,.4)}
+.role-ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px}
+.role h3{font-family:var(--font-d);font-weight:500;font-size:21px;margin-bottom:6px}
+.role p{font-size:13.5px;color:var(--ink-2);line-height:1.55}
+.role-arrow{position:absolute;top:24px;right:24px;color:var(--ink-3);transition:.2s}
+.role:hover .role-arrow{color:var(--ink);transform:translateX(3px)}
+@media(max-width:560px){.roles{grid-template-columns:1fr}}
+
+/* topbar */
+.topbar{border-bottom:1px solid var(--line);background:var(--paper-2);position:sticky;top:0;z-index:50}
+.topbar-in{max-width:920px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:11px;cursor:pointer}
+.brand-mark{width:30px;height:30px;border-radius:8px;background:var(--ink);color:var(--paper-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:600;font-size:15px}
+.brand-txt{font-family:var(--font-d);font-weight:500;font-size:16px;line-height:1.1}
+.brand-txt small{display:block;font-family:var(--font-b);font-size:11px;font-weight:400;color:var(--ink-3)}
+.topright{display:flex;align-items:center;gap:14px}
+.sync{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-3)}
+.sync i{font-size:14px}
+.sync.ok{color:var(--done)}.sync.saving{color:var(--amber)}.sync.off{color:var(--changes)}
+.who{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-2)}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--teal-soft);color:var(--teal-deep);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px}
+
+.banner{background:var(--changes-soft);border:1px solid #E6C3BB;color:var(--changes);font-size:13px;line-height:1.5;padding:12px 16px;border-radius:12px;margin:18px 0 0;display:flex;gap:10px;align-items:flex-start}
+.banner i{flex-shrink:0;margin-top:1px}
+
+/* dash */
+.hero{padding:30px 0 22px}
+.hero h2{font-family:var(--font-d);font-weight:500;font-size:28px;letter-spacing:-.01em;margin-bottom:6px}
+.hero p{font-size:14.5px;color:var(--ink-2)}
+.ringwrap{display:flex;align-items:center;gap:26px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 28px;flex-wrap:wrap}
+.ring{position:relative;width:108px;height:108px;flex-shrink:0}
+.ring svg{transform:rotate(-90deg)}
+.ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-pct{font-family:var(--font-d);font-weight:600;font-size:26px;line-height:1}
+.ring-sub{font-size:10.5px;color:var(--ink-3);margin-top:2px}
+.ring-meta{flex:1;min-width:200px}
+.ring-meta h4{font-family:var(--font-d);font-weight:500;font-size:18px;margin-bottom:4px}
+.ring-meta p{font-size:13px;color:var(--ink-2);line-height:1.55}
+.stagepill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;margin-top:10px;background:var(--teal-soft);color:var(--teal-deep)}
+
+.phase-grid{display:flex;flex-direction:column;gap:14px;padding:18px 0 50px}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;cursor:pointer;transition:.18s}
+.pcard:hover{border-color:var(--ink-3);transform:translateY(-2px);box-shadow:0 10px 26px -20px rgba(33,28,21,.45)}
+.pcard-head{display:flex;align-items:flex-start;gap:14px}
+.pnum{width:40px;height:40px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:600;font-size:17px}
+.pcard-body{flex:1;min-width:0}
+.pcard-toprow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}
+.pcard h3{font-family:var(--font-d);font-weight:500;font-size:18px}
+.pcard .pdesc{font-size:13px;color:var(--ink-2);line-height:1.55;margin-bottom:14px}
+.pbar-track{height:6px;border-radius:999px;background:var(--paper);overflow:hidden;border:1px solid var(--line)}
+.pbar-fill{height:100%;border-radius:999px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.pbar-meta{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.pbar-meta span{font-size:11.5px;color:var(--ink-3)}
+
+/* detail */
+.detail-head{padding:26px 0 14px}
+.crumb{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2);cursor:pointer;margin-bottom:16px;width:fit-content}
+.crumb:hover{color:var(--ink)}
+.detail-banner{display:flex;align-items:flex-start;gap:16px}
+.detail-banner .pnum{width:48px;height:48px;font-size:20px}
+.detail-banner h2{font-family:var(--font-d);font-weight:500;font-size:25px;letter-spacing:-.01em;margin-bottom:6px}
+.detail-banner .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sec{margin:28px 0}
+.sec-title{font-family:var(--font-d);font-weight:500;font-size:18px;margin-bottom:4px;display:flex;align-items:center;gap:9px}
+.sec-hint{font-size:12.5px;color:var(--ink-3);margin-bottom:14px}
+.obj{display:flex;align-items:flex-start;gap:13px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px 16px;margin-bottom:9px;cursor:pointer;transition:.15s}
+.obj:hover{border-color:var(--line-2)}
+.obj.on{background:var(--teal-soft);border-color:#BFE0D4}
+.obj.lock{cursor:default;opacity:.92}
+.ck{width:22px;height:22px;border-radius:7px;border:2px solid var(--line-2);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;background:var(--paper-2)}
+.obj.on .ck{background:var(--done);border-color:var(--done)}
+.obj.on .ck::after{content:'✓';color:#fff;font-size:13px;font-weight:700}
+.obj-tx{flex:1;font-size:14px;line-height:1.55}
+.obj-tx b{font-weight:600}
+.obj.on .obj-tx{color:var(--teal-deep)}
+.bloom{font-size:10px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--line);color:var(--ink-3);white-space:nowrap;flex-shrink:0;margin-top:1px}
+.pract{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px 17px;margin-bottom:9px}
+.pract h4{font-size:14px;font-weight:600;margin-bottom:4px}
+.pract p{font-size:13px;color:var(--ink-2);line-height:1.55}
+.pract .ptime{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-3);margin-top:8px}
+
+/* evidence */
+.ev-empty{font-size:13px;color:var(--ink-3);background:var(--paper-2);border:1px dashed var(--line-2);border-radius:12px;padding:16px;text-align:center}
+.ev-item{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:11px 14px;margin-bottom:8px}
+.ev-ic{width:32px;height:32px;border-radius:8px;background:var(--amber-soft);color:var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ev-body{flex:1;min-width:0}
+.ev-body a{font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-body a:hover{color:var(--teal-deep);text-decoration:underline}
+.ev-body small{font-size:11.5px;color:var(--ink-3);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-del{color:var(--ink-3);cursor:pointer;flex-shrink:0;padding:4px}
+.ev-del:hover{color:var(--changes)}
+.ev-add{display:flex;flex-direction:column;gap:8px;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.ev-add input{font-family:var(--font-b);font-size:13.5px;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;background:var(--card);outline:none;color:var(--ink);width:100%}
+.ev-add input:focus{border-color:var(--teal)}
+
+/* review panel */
+.rev{border-radius:14px;padding:18px 20px;margin:26px 0}
+.rev-progress{background:var(--paper-2);border:1px dashed var(--line-2)}
+.rev-review{background:var(--amber-soft);border:1px solid #E8D3AE}
+.rev-done{background:var(--teal-soft);border:1px solid #BFE0D4}
+.rev-changes{background:var(--changes-soft);border:1px solid #E6C3BB}
+.rev h4{font-size:14.5px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.rev p{font-size:13px;line-height:1.55;color:var(--ink-2);margin-bottom:4px}
+.rev .note{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.55;margin:10px 0;color:var(--ink)}
+.rev .by{font-size:11.5px;color:var(--ink-3);margin-top:6px}
+.gate{font-size:12.5px;color:var(--ink-3);margin-top:10px;display:flex;align-items:center;gap:6px}
+.detail-nav{display:flex;gap:10px;margin:24px 0 50px;align-items:center}
+
+/* manager */
+.mgr-head{padding:28px 0 18px}
+.mgr-head h2{font-family:var(--font-d);font-weight:500;font-size:26px;margin-bottom:5px}
+.mgr-head p{font-size:14px;color:var(--ink-2)}
+.mgr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.mstat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.mstat.hl{background:var(--amber-soft);border-color:#E8D3AE}
+.mstat .v{font-family:var(--font-d);font-weight:600;font-size:24px;line-height:1}
+.mstat.hl .v{color:var(--amber)}
+.mstat .l{font-size:11.5px;color:var(--ink-3);margin-top:6px}
+.mstat.hl .l{color:var(--amber)}
+@media(max-width:620px){.mgr-stats{grid-template-columns:repeat(2,1fr)}}
+.queue{background:var(--card);border:1px solid #E8D3AE;border-radius:16px;padding:18px 20px;margin-bottom:24px}
+.queue h3{font-family:var(--font-d);font-weight:500;font-size:17px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.queue .sub{font-size:12.5px;color:var(--ink-3);margin-bottom:14px}
+.qitem{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+.qitem .avatar{width:34px;height:34px;font-size:13px;background:var(--amber-soft);color:var(--amber)}
+.qitem-body{flex:1;min-width:0}
+.qitem-name{font-weight:600;font-size:14px}
+.qitem-sub{font-size:12px;color:var(--ink-3)}
+.sectdiv{font-family:var(--font-d);font-size:15px;color:var(--ink-2);margin:6px 0 12px}
+.ppl{display:flex;flex-direction:column;gap:11px;padding-bottom:50px}
+.prow{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;cursor:pointer;transition:.15s}
+.prow:hover{border-color:var(--ink-3)}
+.prow-top{display:flex;align-items:center;gap:13px;margin-bottom:12px}
+.prow .avatar{width:38px;height:38px;font-size:14px}
+.prow-name{font-weight:600;font-size:15px}
+.prow-sub{font-size:12px;color:var(--ink-3)}
+.prow-pct{margin-left:auto;font-family:var(--font-d);font-weight:600;font-size:20px}
+.seg{display:flex;gap:5px}
+.seg-item{flex:1}
+.seg-bar{height:8px;border-radius:4px;background:var(--paper);border:1px solid var(--line);overflow:hidden;position:relative}
+.seg-bar-fill{position:absolute;inset:0;border-radius:3px;transition:width .5s}
+.seg-bar.appr{border-color:var(--done)}
+.seg-lab{font-size:9.5px;color:var(--ink-3);margin-top:5px;text-align:center;display:flex;align-items:center;justify-content:center;gap:3px}
+.empty{text-align:center;padding:56px 20px;color:var(--ink-3)}
+.empty i{font-size:38px;display:block;margin-bottom:14px;opacity:.5}
+.empty p{font-size:14px;line-height:1.6;max-width:36ch;margin:0 auto}
+
+/* modal */
+.modal-bg{position:absolute;inset:0;min-height:100vh;background:rgba(33,28,21,.4);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100}
+.modal{background:var(--card);border-radius:20px;padding:28px 30px 26px;max-width:440px;width:100%}
+.modal h3{font-family:var(--font-d);font-weight:500;font-size:22px;margin-bottom:6px}
+.modal p{font-size:13.5px;color:var(--ink-2);line-height:1.55;margin-bottom:18px}
+.modal input,.modal textarea{width:100%;font-family:var(--font-b);font-size:15px;padding:12px 14px;border:1px solid var(--line-2);border-radius:11px;background:var(--paper-2);margin-bottom:14px;outline:none;color:var(--ink)}
+.modal textarea{resize:vertical;min-height:80px;font-size:14px}
+.modal input:focus,.modal textarea:focus{border-color:var(--teal)}
+.existing-lab{font-size:11.5px;color:var(--ink-3);margin-bottom:8px}
+.chiprow{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.chip{font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--paper-2);cursor:pointer;transition:.15s}
+.chip:hover{border-color:var(--teal);color:var(--teal-deep)}
+.loading{min-height:100vh;display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:14px;gap:10px}
+.spin{width:18px;height:18px;border:2px solid var(--line-2);border-top-color:var(--teal);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--paper-2);font-size:13px;padding:10px 18px;border-radius:999px;z-index:200;transition:.3s;opacity:0}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.fade{animation:fade .4s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* diagnostic */
+.diag-head{padding:28px 0 6px}
+.diag-head h2{font-family:var(--font-d);font-weight:500;font-size:26px;letter-spacing:-.01em;margin-bottom:8px}
+.diag-head p{font-size:14px;color:var(--ink-2);line-height:1.6;max-width:60ch}
+.diag-note{background:var(--amber-soft);border:1px solid #E8D3AE;color:#7A4A0A;font-size:12.5px;line-height:1.55;padding:11px 14px;border-radius:11px;margin:14px 0 4px;display:flex;gap:9px;align-items:flex-start}
+.diag-note i{flex-shrink:0;margin-top:1px}
+.diag-area{margin:22px 0 4px}
+.diag-area-h{display:flex;align-items:center;gap:9px;font-family:var(--font-d);font-size:16px;font-weight:500;margin-bottom:10px}
+.dnum{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.drow{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:8px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.drow-tx{flex:1;min-width:200px;font-size:13.5px;line-height:1.5}
+.drow-tx b{font-weight:600}
+.seg3{display:flex;gap:0;border:1px solid var(--line-2);border-radius:9px;overflow:hidden;flex-shrink:0}
+.seg3 button{font-family:var(--font-b);font-size:12px;font-weight:500;padding:7px 12px;border:none;background:var(--paper-2);color:var(--ink-2);cursor:pointer;transition:.12s;border-right:1px solid var(--line)}
+.seg3 button:last-child{border-right:none}
+.seg3 button:hover{background:var(--paper)}
+.seg3 button.on-yes{background:var(--teal);color:#fff}
+.seg3 button.on-partial{background:var(--amber);color:#fff}
+.seg3 button.on-no{background:var(--ink-3);color:#fff}
+.diag-foot{position:sticky;bottom:0;background:var(--paper-2);border-top:1px solid var(--line);margin-top:18px;padding:14px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.diag-foot .cnt{font-size:13px;color:var(--ink-2)}
+.diag-foot .cnt b{color:var(--ink);font-weight:600}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============================================================
+   НАСТРОЙКА: вставь сюда данные своего проекта Supabase.
+   Берутся в Supabase → Project Settings → API.
+   anon-ключ безопасно держать в браузере — доступ защищает RLS.
+   ============================================================ */
+const SUPABASE_URL='PASTE_YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY='PASTE_YOUR_SUPABASE_ANON_KEY';
+
+const PHASES=[
+ {id:0,name:'Осознание роли',time:'1–2 мес',accent:'plum',
+  desc:'Понять разницу между SA и архитектором, научиться читать и критиковать архитектурные решения, освоить C4 и ADR.',
+  objectives:[
+   {id:'p0o0',verb:'Объяснять',text:'роль солюшн архитектора и границы ответственности относительно enterprise architect и tech lead',bloom:'Понимание'},
+   {id:'p0o1',verb:'Различать',text:'функциональные, нефункциональные, бизнес- и технические требования в контексте discovery',bloom:'Понимание'},
+   {id:'p0o2',verb:'Строить',text:'контекстную диаграмму решения (C4 Level 1–2) по готовым требованиям',bloom:'Применение'},
+   {id:'p0o3',verb:'Формулировать',text:'первый ADR с описанием контекста, решения и trade-offs на учебном кейсе',bloom:'Синтез'}],
+  practices:[
+   {t:'Разбор чужого ADR',d:'Взять 2–3 ADR из открытых репозиториев, разобрать структуру и критически оценить обоснование.',time:'~4 ч'},
+   {t:'C4 по своей системе',d:'Нарисовать C4 Level 1–2 для системы, с которой уже работаешь, не подглядывая в документацию.',time:'~3 ч'},
+   {t:'Shadowing архитектора',d:'Присутствовать на 2–3 архитектурных сессиях ментора, задавать вопросы после каждой.',time:'2–3 встречи'}],
+  artifacts:['Stakeholder map для текущего проекта','C4-диаграмма (Level 1–2)','Свой первый ADR'],
+  readiness:['Могу объяснить, зачем нужен архитектор на discovery','Знаю инструменты: C4, ADR, stakeholder map','Написал хотя бы один ADR и получил фидбек']},
+ {id:1,name:'Работа с требованиями',time:'2–3 мес',accent:'teal',
+  desc:'Собирать, структурировать и приоритизировать требования так, чтобы они были готовы к архитектурной оценке и постановке.',
+  objectives:[
+   {id:'p1o0',verb:'Проводить',text:'stakeholder mapping и выявлять всех участников, чьи требования влияют на архитектуру решения',bloom:'Применение'},
+   {id:'p1o1',verb:'Составлять',text:'структурированный набор требований (user stories, AC, constraints), готовый к архитектурной оценке',bloom:'Создание'},
+   {id:'p1o2',verb:'Приоритизировать',text:'требования методами MoSCoW / Kano в связке с бизнес-целями и техническим риском',bloom:'Анализ'},
+   {id:'p1o3',verb:'Выявлять',text:'пробелы, противоречия и неявные допущения в требованиях до начала дизайна',bloom:'Анализ'}],
+  practices:[
+   {t:'Requirements review с ментором',d:'Пройти по требованиям реального проекта вместе с архитектором: где дыры, где противоречия.',time:'~2 ч'},
+   {t:'MoSCoW-сессия',d:'Провести самостоятельную сессию приоритизации на реальном эпике, зафиксировать решения.',time:'~2–3 ч'},
+   {t:'Поиск скрытых требований',d:'Ретроспективно найти НФТ, которые повлияли на архитектуру, но не были описаны.',time:'~3 ч'}],
+  artifacts:['Requirements spec с классификацией','Приоритизированный backlog (MoSCoW)','Список пробелов и допущений'],
+  readiness:['Отличаю «хотелку» от требования с критериями приёмки','Провожу stakeholder mapping самостоятельно','Находил противоречия до начала дизайна']},
+ {id:2,name:'Проектирование решения',time:'3–4 мес',accent:'amber',
+  desc:'Полный цикл архитектурного дизайна: от выбора паттерна до SDD и проектирования интеграций.',
+  objectives:[
+   {id:'p2o0',verb:'Выбирать',text:'подходящий архитектурный паттерн и обосновывать выбор перед командой',bloom:'Оценка'},
+   {id:'p2o1',verb:'Формулировать',text:'ADR с явным описанием trade-offs и альтернатив на реальном проекте',bloom:'Синтез'},
+   {id:'p2o2',verb:'Проектировать',text:'интеграции: API-контракты, форматы данных и механизмы обмена между системами',bloom:'Применение'},
+   {id:'p2o3',verb:'Оценивать',text:'нефункциональные риски (производительность, безопасность, масштабируемость) и отражать в архитектуре',bloom:'Оценка'},
+   {id:'p2o4',verb:'Формировать',text:'Solution Design Document, понятный и бизнесу, и разработчикам',bloom:'Создание'}],
+  practices:[
+   {t:'Design challenge',d:'Спроектировать решение по кейсу от и до, защитить перед ментором как перед заказчиком.',time:'~8–12 ч'},
+   {t:'API-контракт с разработчиком',d:'Совместно с dev-лидом описать OpenAPI для 2–3 эндпоинтов, согласовать контракт.',time:'~3 ч'},
+   {t:'NFR-аудит',d:'Провести аудит нефункциональных требований существующего решения: что не учтено, какие риски.',time:'~4 ч'}],
+  artifacts:['Solution Design Document','2–3 ADR с обоснованием','Integration spec / OpenAPI fragment'],
+  readiness:['Написал SDD и получил апрув ментора','Объясняю выбор паттерна через trade-offs','Описывал интеграции на уровне API-контрактов']},
+ {id:3,name:'Постановка и ведение',time:'2–3 мес',accent:'blue',
+  desc:'Декомпозировать solution до task-ready backlog, вести команду через реализацию, управлять scope-creep.',
+  objectives:[
+   {id:'p3o0',verb:'Декомпозировать',text:'solution на stories и tasks с Definition of Ready: AC, technical notes, dependencies',bloom:'Анализ'},
+   {id:'p3o1',verb:'Строить',text:'roadmap реализации: фазы, зависимости и критический путь для планирования спринтов',bloom:'Создание'},
+   {id:'p3o2',verb:'Проводить',text:'backlog refinement с командой: отвечать на технические вопросы, корректировать scope',bloom:'Применение'},
+   {id:'p3o3',verb:'Управлять',text:'scope-creep: фиксировать изменения, оценивать влияние на архитектуру, согласовывать с заказчиком',bloom:'Оценка'},
+   {id:'p3o4',verb:'Адаптировать',text:'уровень технической детализации под аудиторию: бизнес, PM, разработчики, QA',bloom:'Применение'},
+   {id:'p3o5',verb:'Фасилитировать',text:'solution design workshop с несколькими командами для выработки согласованного решения',bloom:'Создание'}],
+  practices:[
+   {t:'Epic decomposition',d:'Декомпозировать готовый SDD до stories с DoR. Проверить с dev-лидом: всё понятно без звонка?',time:'~6 ч'},
+   {t:'Refinement соло',d:'Провести refinement самостоятельно, без ментора, получить фидбек от команды.',time:'~2 ч'},
+   {t:'Change request разбор',d:'Проанализировать влияние изменения требований в середине разработки на архитектуру.',time:'~3 ч'}],
+  artifacts:['Task-ready backlog с DoR','Sprint roadmap с зависимостями','Закрытый discovery epic'],
+  readiness:['Команда работает с моим backlog без доп. вопросов','Самостоятельно вёл refinement','Закрыл discovery epic под ключ']}
+];
+const ACCENT={plum:{fill:'#ECE7F5',ink:'#4A3C72',bar:'#5B4A8A'},teal:{fill:'#E1F1EB',ink:'#0A4E3D',bar:'#0F6E56'},amber:{fill:'#F6E9D5',ink:'#7A4A0A',bar:'#A8650F'},blue:{fill:'#E1ECF5',ink:'#16456E',bar:'#1B5E96'}};
+const ALL_IDS=PHASES.flatMap(p=>p.objectives.map(o=>o.id));
+const TOTAL=ALL_IDS.length;
+const slug=n=>'sa-guide:'+n.toLowerCase().trim().replace(/[^a-zа-я0-9]+/gi,'_').replace(/^_|_$/g,'');
+
+/* ---------- supabase data layer ---------- */
+const DBLIVE = !!(window.supabase) && !String(SUPABASE_URL).includes('PASTE');
+const SB = DBLIVE ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+function rowToRec(row){return {uid:row.user_id,name:row.name||'',checked:row.checked||{},evidence:row.evidence||{},status:row.status||{},review:row.review||{},baseline:row.baseline||null,baselinePct:(row.baseline_pct==null?null:row.baseline_pct),started:Number(row.started)||Date.now(),updated:Number(row.updated)||Date.now()};}
+function recToRow(r){return {user_id:r.uid,name:r.name,checked:r.checked,evidence:r.evidence,status:r.status,review:r.review,baseline:r.baseline,baseline_pct:r.baselinePct,started:r.started,updated:Date.now()};}
+
+async function dbLoadMine(){ try{const {data,error}=await SB.from('progress').select('*').eq('user_id',state.uid).maybeSingle();if(error){console.error(error);return null;}return data?rowToRec(data):null;}catch(e){console.error(e);return null;} }
+async function dbLoadOne(uid){ try{const {data}=await SB.from('progress').select('*').eq('user_id',uid).maybeSingle();return data?rowToRec(data):null;}catch(e){return null;} }
+async function dbLoadRoster(){ try{const {data,error}=await SB.from('progress').select('*');if(error){console.error(error);return [];}return (data||[]).map(rowToRec);}catch(e){return [];} }
+async function dbSave(rec){ try{const {error}=await SB.from('progress').upsert(recToRow(rec),{onConflict:'user_id'});if(error){console.error(error);return false;}rec.updated=Date.now();return true;}catch(e){console.error(e);return false;} }
+async function dbIsReviewer(){ try{const {data}=await SB.from('reviewers').select('user_id').eq('user_id',state.uid).maybeSingle();return !!data;}catch(e){return false;} }
+async function loadRoster(){ return await dbLoadRoster(); }
+
+let state={view:'login',role:null,uid:null,email:null,isReviewer:false,name:null,mgr:'',rec:null,phase:null,roster:[],syncing:false,syncFail:false};
+
+function blankRec(name,uid){return {uid,name,started:Date.now(),updated:Date.now(),checked:{},evidence:{},status:{},review:{},baseline:null,baselinePct:null};}
+
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const initials=n=>(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const phaseDone=(r,p)=>p.objectives.filter(o=>r.checked[o.id]).length;
+const allDoneInPhase=(r,p)=>p.objectives.every(o=>r.checked[o.id]);
+const countAll=r=>ALL_IDS.filter(id=>r.checked[id]).length;
+const approvedCount=r=>PHASES.filter(p=>r.status[p.id]==='done').length;
+const phStatus=(r,p)=>r.status[p.id]||'progress';
+const root=()=>document.getElementById('app');
+
+function toast(m){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t);}t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1900);}
+function setSync(s){state.syncing=s==='saving';state.syncFail=s==='off';const el=document.getElementById('syncPill');if(el)el.outerHTML=syncPill();}
+function syncPill(){
+  if(!DBLIVE)return `<span class="sync off" id="syncPill"><i class="ti ti-cloud-off"></i>не настроено</span>`;
+  if(state.syncing)return `<span class="sync saving" id="syncPill"><i class="ti ti-loader-2"></i>сохраняю…</span>`;
+  if(state.syncFail)return `<span class="sync off" id="syncPill"><i class="ti ti-cloud-off"></i>не сохранилось</span>`;
+  return `<span class="sync ok" id="syncPill"><i class="ti ti-cloud-check"></i>сохранено</span>`;
+}
+
+let saveTimer=null;
+function queueSave(){
+  if(!state.rec)return;
+  setSync('saving');
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    const ok=await dbSave(state.rec);
+    setSync(ok?'ok':'off');
+  },350);
+}
+
+function go(v,ex={}){Object.assign(state,{view:v},ex);render();window.scrollTo(0,0);}
+function loadingHTML(m){return `<div class="loading"><div class="spin"></div>${m}</div>`;}
+
+/* ---------- auth / boot ---------- */
+function renderConfigError(){
+  root().innerHTML=`<div class="land fade"><div class="land-eyebrow" style="color:var(--changes)">Не настроено</div>
+  <h1 style="font-size:30px">Нужно подключить Supabase</h1>
+  <p class="lead">В начале файла вставь <code>SUPABASE_URL</code> и <code>SUPABASE_ANON_KEY</code> своего проекта, затем открой приложение по ссылке хостинга (не внутри Claude — там нет доступа к сети). Инструкция в файле SETUP.</p></div>`;
+}
+function renderLogin(){
+  root().innerHTML=`<div class="land fade">
+    <div class="land-eyebrow">Путь к солюшн архитектору</div>
+    <h1 style="font-size:clamp(28px,5vw,42px)">Вход в гайд</h1>
+    <p class="lead" style="margin-bottom:24px">Войди под своим логином. Прогресс, артефакты и решения по ревью привязаны к аккаунту — действовать от чужого имени нельзя.</p>
+    <div style="width:100%;max-width:360px;text-align:left">
+      <input id="liEmail" placeholder="логин (напр. ivan.petrov@sa.team)" autocomplete="username" style="width:100%;font-family:var(--font-b);font-size:15px;padding:12px 14px;border:1px solid var(--line-2);border-radius:11px;background:var(--card);margin-bottom:10px;outline:none;color:var(--ink)"/>
+      <input id="liPw" type="password" placeholder="пароль" autocomplete="current-password" style="width:100%;font-family:var(--font-b);font-size:15px;padding:12px 14px;border:1px solid var(--line-2);border-radius:11px;background:var(--card);margin-bottom:14px;outline:none;color:var(--ink)"/>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">Войти <i class="ti ti-arrow-right"></i></button>
+      <p style="font-size:12px;color:var(--ink-3);margin-top:14px;line-height:1.5">Аккаунты заводит руководитель в панели Supabase. Если не можешь войти — обратись к нему.</p>
+    </div>
+  </div>`;
+  setTimeout(()=>{const e=document.getElementById('liEmail');if(e){e.focus();const pw=document.getElementById('liPw');pw.onkeydown=ev=>{if(ev.key==='Enter')doLogin();};}},50);
+}
+window.doLogin=async function(){
+  const email=(document.getElementById('liEmail').value||'').trim();
+  const pw=document.getElementById('liPw').value||'';
+  if(!email||!pw){toast('Введи логин и пароль');return;}
+  root().innerHTML=loadingHTML('Вхожу…');
+  try{
+    const {error}=await SB.auth.signInWithPassword({email,password:pw});
+    if(error){toast('Неверный логин или пароль');renderLogin();return;}
+    await afterLogin();
+  }catch(e){toast('Нет связи с базой');renderLogin();}
+};
+async function afterLogin(){
+  root().innerHTML=loadingHTML('Загружаю…');
+  const {data}=await SB.auth.getUser();
+  const user=data&&data.user; if(!user){renderLogin();return;}
+  state.uid=user.id; state.email=user.email;
+  state.isReviewer=await dbIsReviewer();
+  if(state.isReviewer){ state.role='manager'; state.mgr=user.email; state.roster=await dbLoadRoster(); go('manager'); return; }
+  state.role='analyst';
+  const rec=await dbLoadMine();
+  if(!rec){ renderFirstTime(); return; }
+  state.name=rec.name||user.email; state.rec=rec; go('dash');
+}
+function renderFirstTime(){
+  root().innerHTML=`<div class="modal-bg fade"><div class="modal">
+    <h3>Как тебя показывать?</h3>
+    <p>Имя и фамилия — так тебя увидит руководитель в сводке. Логин остаётся прежним.</p>
+    <input id="ftName" placeholder="Имя и фамилия" autocomplete="name"/>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="createMine()">Начать диагностику <i class="ti ti-arrow-right"></i></button>
+  </div></div>`;
+  setTimeout(()=>{const i=document.getElementById('ftName');if(i){i.focus();i.onkeydown=e=>{if(e.key==='Enter')createMine();};}},50);
+}
+window.createMine=async function(){
+  const name=(document.getElementById('ftName').value||'').trim();
+  if(name.length<2){toast('Введи имя');return;}
+  state.name=name; state.rec=blankRec(name,state.uid);
+  root().innerHTML=loadingHTML('Создаю профиль…');
+  await dbSave(state.rec);
+  state._diag={}; go('diag');
+};
+window.signOut=async function(){
+  try{await SB.auth.signOut();}catch(e){}
+  state={view:'login',role:null,uid:null,email:null,isReviewer:false,name:null,mgr:'',rec:null,phase:null,roster:[],syncing:false,syncFail:false};
+  renderLogin();
+};
+window.goHome=function(){ if(state.role==='manager')go('manager'); else go('dash'); };
+async function boot(){
+  if(!DBLIVE){ renderConfigError(); return; }
+  root().innerHTML=loadingHTML('Подключаюсь…');
+  try{
+    const {data}=await SB.auth.getSession();
+    if(data&&data.session){ await afterLogin(); } else { renderLogin(); }
+  }catch(e){ toast('Нет связи с базой'); renderLogin(); }
+}
+
+/* ---------- topbar ---------- */
+function topbar(){
+  const out=`<button class="btn btn-sm btn-ghost" onclick="signOut()" title="Выйти"><i class="ti ti-logout"></i></button>`;
+  const right=state.role==='analyst'
+    ? `${syncPill()}<div class="who"><div class="avatar">${initials(state.name)}</div>${esc(state.name)}</div>${out}`
+    : `<div class="who"><div class="avatar" style="background:var(--amber-soft);color:var(--amber)"><i class="ti ti-checklist" style="font-size:14px"></i></div>${esc(state.mgr)}</div>${out}`;
+  return `<div class="topbar"><div class="topbar-in">
+    <div class="brand" onclick="goHome()"><div class="brand-mark">SA</div>
+    <div class="brand-txt">Путь к архитектору<small>SA → Solution Architect</small></div></div>
+    <div class="topright">${right}</div></div></div>`;
+}
+function offlineBanner(){ return ''; }
+
+/* ---------- diagnostic ---------- */
+function renderDiag(){
+  if(!state._diag)state._diag={};
+  const ans=state._diag;
+  root().innerHTML=topbar()+`<div class="shell fade">${offlineBanner()}
+    <div class="diag-head"><h2>Стартовая диагностика</h2>
+    <p>По каждой цели отметь, где ты сейчас. Это базовый стандарт солюшн архитектора — единый для всех, независимо от того, пришёл ты из аналитики или уже работаешь архитектором. То, что уже умеешь уверенно, не придётся проходить заново.</p>
+    <div class="diag-note"><i class="ti ti-info-circle"></i><div>«Уже уверенно» зачитывается сразу — но подтвердить артефактом и пройти ревью руководителя нужно для каждого этапа. Самооценка экономит время на изучении, а не отменяет проверку.</div></div></div>
+    ${PHASES.map(p=>{const A=ACCENT[p.accent];return `
+      <div class="diag-area"><div class="diag-area-h"><span class="dnum" style="background:${A.fill};color:${A.ink}">${p.id+1}</span>${p.name}</div>
+      ${p.objectives.map(o=>{const a=ans[o.id]||'';return `<div class="drow"><div class="drow-tx"><b>${o.verb}</b> ${o.text}</div>
+        <div class="seg3" id="seg-${o.id}">
+          <button class="${a==='yes'?'on-yes':''}" data-l="yes" onclick="setDiag('${o.id}','yes')">Уже уверенно</button>
+          <button class="${a==='partial'?'on-partial':''}" data-l="partial" onclick="setDiag('${o.id}','partial')">Частично</button>
+          <button class="${a==='no'?'on-no':''}" data-l="no" onclick="setDiag('${o.id}','no')">Ещё нет</button>
+        </div></div>`;}).join('')}</div>`;}).join('')}
+    <div class="diag-foot"><span class="cnt"><b id="diagYes">0</b> из ${TOTAL} отмечено как освоенное</span>
+    <button class="btn btn-primary" style="margin-left:auto" onclick="finishDiag()">Открыть мой маршрут <i class="ti ti-arrow-right"></i></button></div>
+    <div style="padding-bottom:30px"></div></div>`;
+  updateDiagCount();
+}
+window.setDiag=function(id,level){
+  state._diag[id]=level;
+  const seg=document.getElementById('seg-'+id);
+  if(seg)seg.querySelectorAll('button').forEach(b=>{
+    const l=b.getAttribute('data-l');
+    ['on-yes','on-partial','on-no'].forEach(cls=>b.classList.remove(cls));
+    if(l===level)b.classList.add('on-'+level);
+  });
+  updateDiagCount();
+};
+function updateDiagCount(){const y=Object.values(state._diag||{}).filter(v=>v==='yes').length;const el=document.getElementById('diagYes');if(el)el.textContent=y;}
+window.finishDiag=function(){
+  const ans=state._diag||{};
+  ALL_IDS.forEach(id=>{ if(ans[id]==='yes')state.rec.checked[id]=true; });
+  state.rec.baseline=ans;
+  state.rec.baselinePct=Math.round(Object.values(ans).filter(v=>v==='yes').length/TOTAL*100);
+  queueSave();
+  toast('Маршрут собран под тебя');
+  go('dash');
+};
+
+/* ---------- analyst dash ---------- */
+function renderDash(){
+  const r=state.rec,done=countAll(r),pct=Math.round(done/TOTAL*100),appr=approvedCount(r);
+  const curr=PHASES.find(p=>phStatus(r,p)!=='done')||PHASES[PHASES.length-1];
+  const allAppr=appr===PHASES.length;
+  const C=2*Math.PI*48;
+  root().innerHTML=topbar()+`<div class="shell fade">${offlineBanner()}
+    <div class="hero"><h2>Привет, ${esc(state.name.split(' ')[0])}</h2><p>Твой маршрут к роли солюшн архитектора. Закрывай цели, прикрепляй доказательства, отправляй этап на ревью.</p></div>
+    <div class="ringwrap">
+      <div class="ring"><svg width="108" height="108"><circle cx="54" cy="54" r="48" fill="none" stroke="var(--line)" stroke-width="9"/><circle cx="54" cy="54" r="48" fill="none" stroke="var(--teal)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}" style="transition:stroke-dashoffset .7s"/></svg>
+      <div class="ring-label"><div class="ring-pct">${pct}%</div><div class="ring-sub">${done}/${TOTAL} целей</div></div></div>
+      <div class="ring-meta"><h4>${allAppr?'Маршрут принят 🎯':'Сейчас: '+curr.name}</h4>
+      <p>${allAppr?'Все четыре этапа приняты руководителем. Готов к самостоятельной роли архитектора.':curr.desc}</p>
+      <div class="stagepill"><i class="ti ti-circle-check" style="font-size:13px"></i>Принято этапов: ${appr} из ${PHASES.length}</div>${r.baselinePct!=null?`<span class="stagepill" style="background:var(--paper);color:var(--ink-2);border:1px solid var(--line);margin-left:8px"><i class="ti ti-flag" style="font-size:12px"></i>старт: ${r.baselinePct}%</span>`:''}</div></div>
+    <div class="phase-grid">${PHASES.map(p=>{
+      const c=phaseDone(r,p),t=p.objectives.length,pp=Math.round(c/t*100),A=ACCENT[p.accent],st=phStatus(r,p);
+      return `<div class="pcard" onclick="openPhase(${p.id})"><div class="pcard-head">
+        <div class="pnum" style="background:${A.fill};color:${A.ink}">${p.id+1}</div>
+        <div class="pcard-body">
+          <div class="pcard-toprow"><h3>${p.name}</h3>${statusBadge(st)}</div>
+          <div class="pdesc">${p.desc}</div>
+          <div class="pbar-track"><div class="pbar-fill" style="width:${pp}%;background:${A.bar}"></div></div>
+          <div class="pbar-meta"><span>${c} из ${t} целей · ориентир ${p.time}</span><span>${pp}%</span></div>
+        </div></div></div>`;
+    }).join('')}</div>
+  </div>`;
+}
+function statusBadge(st){
+  if(st==='done')return `<span class="st st-done"><i class="ti ti-circle-check" style="font-size:12px"></i>принят</span>`;
+  if(st==='review')return `<span class="st st-review"><i class="ti ti-clock-hour-4" style="font-size:12px"></i>на ревью</span>`;
+  if(st==='changes')return `<span class="st st-changes"><i class="ti ti-arrow-back-up" style="font-size:12px"></i>на доработку</span>`;
+  return `<span class="st st-progress"><i class="ti ti-dots" style="font-size:12px"></i>в работе</span>`;
+}
+
+/* ---------- phase detail (analyst) ---------- */
+window.openPhase=function(id){go('phase',{phase:id});};
+function renderPhase(){
+  const p=PHASES[state.phase],r=state.rec,A=ACCENT[p.accent];
+  const c=phaseDone(r,p),t=p.objectives.length,st=phStatus(r,p);
+  const ev=r.evidence[p.id]||[];
+  const locked=(st==='review'||st==='done');
+  const prev=state.phase>0?state.phase-1:null,next=state.phase<PHASES.length-1?state.phase+1:null;
+  root().innerHTML=topbar()+`<div class="shell fade">
+    <div class="detail-head"><div class="crumb" onclick="go('dash')"><i class="ti ti-arrow-left" style="font-size:15px"></i> Все этапы</div>
+    <div class="detail-banner"><div class="pnum" style="background:${A.fill};color:${A.ink}">${p.id+1}</div>
+    <div><h2>${p.name}</h2><div class="meta">${statusBadge(st)}<span class="tag" style="background:var(--paper);color:var(--ink-2);border:1px solid var(--line)"><i class="ti ti-clock" style="font-size:11px"></i>${p.time}</span><span class="tag" style="background:var(--paper);color:var(--ink-2);border:1px solid var(--line)">${c}/${t} целей</span></div></div></div></div>
+
+    ${reviewPanel(r,p,st)}
+
+    <div class="sec"><div class="sec-title"><i class="ti ti-target" style="color:${A.bar};font-size:18px"></i> Учебные цели</div>
+    <div class="sec-hint">${locked?'Этап на ревью или принят — отметки заморожены':'Отмечай по мере освоения, сохраняется автоматически'}</div>
+    ${p.objectives.map(o=>`<div class="obj ${r.checked[o.id]?'on':''} ${locked?'lock':''}" ${locked?'':`onclick="toggleObj('${o.id}')"`}><div class="ck"></div><div class="obj-tx"><b>${o.verb}</b> ${o.text}</div><div class="bloom">${o.bloom}</div></div>`).join('')}</div>
+
+    <div class="sec"><div class="sec-title"><i class="ti ti-paperclip" style="color:${A.bar};font-size:18px"></i> Артефакты-доказательства</div>
+    <div class="sec-hint">Прикрепи ссылки на результаты: Confluence, GitHub, Figma, Google Drive — то, что увидит ревьюер</div>
+    ${ev.length?ev.map((e,i)=>`<div class="ev-item"><div class="ev-ic"><i class="ti ti-link"></i></div><div class="ev-body"><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.label||e.url)}</a><small>${esc(e.url)}</small></div>${locked?'':`<span class="ev-del" onclick="delEvidence(${p.id},${i})" title="Удалить"><i class="ti ti-trash" style="font-size:16px"></i></span>`}</div>`).join(''):`<div class="ev-empty">Пока нет приложенных артефактов</div>`}
+    ${locked?'':`<div class="ev-add"><input id="evLabel" placeholder="Название (напр. «SDD для платёжного модуля»)"/><input id="evUrl" placeholder="https://..."/><button class="btn btn-sm" style="align-self:flex-start" onclick="addEvidence(${p.id})"><i class="ti ti-plus"></i> Прикрепить</button></div>`}</div>
+
+    <div class="sec"><div class="sec-title"><i class="ti ti-barbell" style="color:${A.bar};font-size:18px"></i> Практические задания</div>
+    <div class="sec-hint">Чтобы закрыть цели — не прочитать, а сделать</div>
+    ${p.practices.map(pr=>`<div class="pract"><h4>${pr.t}</h4><p>${pr.d}</p><div class="ptime"><i class="ti ti-clock" style="font-size:12px"></i> ${pr.time}</div></div>`).join('')}</div>
+
+    <div class="sec"><div class="sec-title"><i class="ti ti-files" style="color:${A.bar};font-size:18px"></i> Что должно появиться на руках</div><div class="sec-hint"></div>
+    ${p.artifacts.map(a=>`<div class="ev-item" style="cursor:default"><div class="ev-ic" style="background:var(--paper);color:var(--ink-3)"><i class="ti ti-file-text"></i></div><div class="ev-body"><span style="font-size:13.5px">${a}</span></div></div>`).join('')}</div>
+
+    <div class="sec"><div class="rev rev-progress"><h4><i class="ti ti-checklist" style="color:var(--teal)"></i> Готов к ревью, когда:</h4>
+    ${p.readiness.map(x=>`<div class="rev p" style="margin:0;padding:0"><p style="margin:3px 0">→ ${x}</p></div>`).join('')}</div></div>
+
+    <div class="detail-nav">
+      ${prev!==null?`<button class="btn btn-sm" onclick="openPhase(${prev})"><i class="ti ti-arrow-left"></i> Этап ${prev+1}</button>`:'<span></span>'}
+      ${next!==null?`<button class="btn btn-sm" style="margin-left:auto" onclick="openPhase(${next})">Этап ${next+1} <i class="ti ti-arrow-right"></i></button>`:`<button class="btn btn-sm" style="margin-left:auto" onclick="go('dash')">К обзору <i class="ti ti-layout-grid"></i></button>`}
+    </div>
+  </div>`;
+}
+function reviewPanel(r,p,st){
+  const ev=r.evidence[p.id]||[];
+  const rv=r.review[p.id];
+  if(st==='done'){
+    return `<div class="rev rev-done"><h4><i class="ti ti-circle-check" style="color:var(--done)"></i> Этап принят</h4>
+    ${rv&&rv.note?`<div class="note">${esc(rv.note)}</div>`:''}<div class="by">Принял: ${esc(rv?rv.by:'—')}${rv&&rv.at?' · '+timeAgo(rv.at):''}</div></div>`;
+  }
+  if(st==='review'){
+    return `<div class="rev rev-review"><h4><i class="ti ti-clock-hour-4" style="color:var(--amber)"></i> На ревью у руководителя</h4>
+    <p>Этап отправлен на проверку. Отметки и артефакты заморожены до решения ревьюера.</p>
+    <button class="btn btn-sm" style="margin-top:10px" onclick="recallPhase(${p.id})"><i class="ti ti-arrow-back-up"></i> Отозвать с ревью</button></div>`;
+  }
+  const objOk=allDoneInPhase(r,p),evOk=ev.length>0;
+  const ready=objOk&&evOk;
+  let panel=`<div class="rev ${st==='changes'?'rev-changes':'rev-progress'}">`;
+  if(st==='changes'&&rv){
+    panel+=`<h4><i class="ti ti-arrow-back-up" style="color:var(--changes)"></i> Возвращено на доработку</h4>
+    ${rv.note?`<div class="note">${esc(rv.note)}</div>`:'<p>Ревьюер вернул этап без комментария.</p>'}<div class="by">Вернул: ${esc(rv.by)}${rv.at?' · '+timeAgo(rv.at):''}</div>`;
+  }else{
+    panel+=`<h4><i class="ti ti-send" style="color:var(--teal)"></i> Отправка на ревью</h4><p>Когда все цели закрыты и приложены артефакты — отправь этап руководителю на проверку.</p>`;
+  }
+  panel+=`<div class="gate"><i class="ti ti-${objOk?'circle-check':'circle'}" style="color:${objOk?'var(--done)':'var(--ink-3)'}"></i> все цели отмечены (${phaseDone(r,p)}/${p.objectives.length})</div>
+  <div class="gate"><i class="ti ti-${evOk?'circle-check':'circle'}" style="color:${evOk?'var(--done)':'var(--ink-3)'}"></i> приложен хотя бы один артефакт (${ev.length})</div>
+  <button class="btn btn-ok btn-sm" style="margin-top:12px" ${ready?'':'disabled'} onclick="submitPhase(${p.id})"><i class="ti ti-send"></i> Отправить на ревью</button></div>`;
+  return panel;
+}
+window.toggleObj=function(id){
+  state.rec.checked[id]=!state.rec.checked[id];
+  const el=event.currentTarget;el.classList.toggle('on');
+  const p=PHASES[state.phase];
+  // refresh review panel + counts without full reload
+  const panel=document.querySelector('.rev');
+  queueSave();
+  renderPhase();
+};
+window.addEvidence=function(pid){
+  const label=document.getElementById('evLabel').value.trim();
+  let url=document.getElementById('evUrl').value.trim();
+  if(!url){toast('Вставь ссылку');return;}
+  if(!/^https?:\/\//i.test(url))url='https://'+url;
+  if(!state.rec.evidence[pid])state.rec.evidence[pid]=[];
+  state.rec.evidence[pid].push({label:label||url,url,at:Date.now()});
+  queueSave();renderPhase();
+};
+window.delEvidence=function(pid,i){state.rec.evidence[pid].splice(i,1);queueSave();renderPhase();};
+window.submitPhase=function(pid){
+  state.rec.status[pid]='review';
+  queueSave();toast('Этап отправлен на ревью');renderPhase();
+};
+window.recallPhase=function(pid){state.rec.status[pid]='progress';queueSave();toast('Этап отозван');renderPhase();};
+
+/* ---------- manager ---------- */
+function renderManager(){
+  const roster=state.roster.slice();
+  const n=roster.length;
+  const avg=n?Math.round(roster.reduce((s,r)=>s+countAll(r),0)/(n*TOTAL)*100):0;
+  const pending=[];roster.forEach(r=>PHASES.forEach(p=>{if(phStatus(r,p)==='review')pending.push({r,p});}));
+  const fullyAppr=roster.filter(r=>approvedCount(r)===PHASES.length).length;
+  const sorted=roster.slice().sort((a,b)=>approvedCount(b)-approvedCount(a)||countAll(b)-countAll(a));
+  let queue='';
+  if(pending.length){
+    queue=`<div class="queue"><h3><i class="ti ti-inbox" style="color:var(--amber)"></i> Ждут вашего ревью</h3><div class="sub">${pending.length} ${plural(pending.length,'этап','этапа','этапов')} на проверке</div>
+    ${pending.map(({r,p})=>`<div class="qitem"><div class="avatar">${initials(r.name)}</div><div class="qitem-body"><div class="qitem-name">${esc(r.name)}</div><div class="qitem-sub">Этап ${p.id+1} · ${p.name} · ${(r.evidence[p.id]||[]).length} артефакт.</div></div><button class="btn btn-sm" onclick="reviewOpen('${esc(r.name).replace(/'/g,"\\'")}',${p.id})"><i class="ti ti-eye"></i> Проверить</button></div>`).join('')}</div>`;
+  }
+  let body;
+  if(!n){body=`<div class="empty"><i class="ti ti-users"></i><p>${DBLIVE?'Пока никто не начал маршрут. Как только аналитики войдут и отметят первые цели, они появятся здесь.':'База не настроена — данные аналитиков не подгружаются.'}</p></div>`;}
+  else{
+    body=`<div class="sectdiv">Команда</div><div class="ppl">${sorted.map(r=>{
+      const tot=countAll(r),pct=Math.round(tot/TOTAL*100),ap=approvedCount(r);
+      const curr=PHASES.find(p=>phStatus(r,p)!=='done');
+      const stage=ap===PHASES.length?'Маршрут принят':('Этап '+(curr.id+1)+' · '+curr.name);
+      return `<div class="prow" onclick="mgrPerson('${r.uid}')">
+        <div class="prow-top"><div class="avatar">${initials(r.name)}</div><div><div class="prow-name">${esc(r.name)}</div><div class="prow-sub">${stage} · принято ${ap}/${PHASES.length}${r.baselinePct!=null?' · старт '+r.baselinePct+'%':''}</div></div><div class="prow-pct" style="color:${pct===100?'var(--done)':'var(--ink)'}">${pct}%</div></div>
+        <div class="seg">${PHASES.map(p=>{const cc=phaseDone(r,p),tt=p.objectives.length,A=ACCENT[p.accent],st=phStatus(r,p);return `<div class="seg-item"><div class="seg-bar ${st==='done'?'appr':''}"><div class="seg-bar-fill" style="width:${Math.round(cc/tt*100)}%;background:${st==='done'?'var(--done)':A.bar}"></div></div><div class="seg-lab">${st==='review'?'<i class="ti ti-clock-hour-4" style="font-size:10px;color:var(--amber)"></i>':st==='changes'?'<i class="ti ti-arrow-back-up" style="font-size:10px;color:var(--changes)"></i>':st==='done'?'<i class="ti ti-check" style="font-size:10px;color:var(--done)"></i>':cc+'/'+tt}</div></div>`;}).join('')}</div>
+      </div>`;}).join('')}</div>`;
+  }
+  root().innerHTML=topbar()+`<div class="shell fade">${offlineBanner()}
+    <div class="mgr-head"><h2>Прогресс команды</h2><p>Кто на каком этапе пути от аналитика к архитектору</p></div>
+    <div class="mgr-stats">
+      <div class="mstat"><div class="v">${n}</div><div class="l">в маршруте</div></div>
+      <div class="mstat ${pending.length?'hl':''}"><div class="v">${pending.length}</div><div class="l">на ревью</div></div>
+      <div class="mstat"><div class="v">${avg}%</div><div class="l">средний прогресс</div></div>
+      <div class="mstat"><div class="v">${fullyAppr}</div><div class="l">прошли полностью</div></div>
+    </div>
+    ${queue}${body}
+    <div style="padding-bottom:50px"><button class="btn btn-sm" onclick="refreshMgr()"><i class="ti ti-refresh"></i> Обновить</button></div>
+  </div>`;
+}
+function plural(n,a,b,c){const m=n%100,d=n%10;if(m>=11&&m<=14)return c;if(d===1)return a;if(d>=2&&d<=4)return b;return c;}
+window.refreshMgr=async function(){root().innerHTML=loadingHTML('Обновляю…');state.roster=await loadRoster();render();};
+window.mgrPerson=function(uid){const r=state.roster.find(x=>x.uid===uid);if(r)go('mgrDetail',{rec:r});};
+
+function renderMgrDetail(){
+  const r=state.rec,tot=countAll(r),pct=Math.round(tot/TOTAL*100),ap=approvedCount(r);
+  root().innerHTML=topbar()+`<div class="shell fade">
+    <div class="detail-head"><div class="crumb" onclick="backToMgr()"><i class="ti ti-arrow-left" style="font-size:15px"></i> Вся команда</div>
+    <div class="detail-banner"><div class="avatar" style="width:48px;height:48px;font-size:17px">${initials(r.name)}</div>
+    <div><h2>${esc(r.name)}</h2><div class="meta"><span class="tag" style="background:var(--teal-soft);color:var(--teal-deep)">${pct}% · принято ${ap}/${PHASES.length}</span>${r.baselinePct!=null?`<span class="tag" style="background:var(--paper);color:var(--ink-2);border:1px solid var(--line)"><i class="ti ti-flag" style="font-size:11px"></i> старт ${r.baselinePct}%</span>`:''}${r.updated?`<span class="tag" style="background:var(--paper);color:var(--ink-2);border:1px solid var(--line)">обновлено ${timeAgo(r.updated)}</span>`:''}</div></div></div></div>
+    ${PHASES.map(p=>{
+      const c=phaseDone(r,p),t=p.objectives.length,A=ACCENT[p.accent],st=phStatus(r,p),ev=r.evidence[p.id]||[],rv=r.review[p.id];
+      return `<div class="rev ${st==='done'?'rev-done':st==='review'?'rev-review':st==='changes'?'rev-changes':'rev-progress'}" style="margin:18px 0">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span class="pnum" style="width:30px;height:30px;font-size:14px;border-radius:8px;background:${A.fill};color:${A.ink}">${p.id+1}</span><div style="flex:1"><div style="font-family:var(--font-d);font-size:16px;font-weight:500">${p.name}</div><div style="font-size:12px;color:var(--ink-3)">${c}/${t} целей</div></div>${statusBadge(st)}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--ink-3);margin:10px 0 6px">Артефакты (${ev.length})</div>
+        ${ev.length?ev.map(e=>`<div class="ev-item"><div class="ev-ic"><i class="ti ti-link"></i></div><div class="ev-body"><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.label||e.url)}</a><small>${esc(e.url)}</small></div></div>`).join(''):'<div class="ev-empty" style="padding:11px">Артефакты не приложены</div>'}
+        ${rv&&rv.note?`<div class="note">${esc(rv.note)}</div><div class="by">${st==='done'?'Принял':'Вернул'}: ${esc(rv.by)}${rv.at?' · '+timeAgo(rv.at):''}</div>`:''}
+        ${st==='review'?`<div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ok btn-sm" onclick="decide('${r.uid}',${p.id},'approve')"><i class="ti ti-check"></i> Принять этап</button><button class="btn btn-warn btn-sm" onclick="decide('${r.uid}',${p.id},'changes')"><i class="ti ti-arrow-back-up"></i> На доработку</button></div>`:''}
+      </div>`;
+    }).join('')}
+    <div style="padding-bottom:50px"></div></div>`;
+}
+window.backToMgr=function(){go('manager');};
+window.decide=function(uid,pid,kind){
+  state._decision={uid,pid,kind};
+  const isAppr=kind==='approve';
+  root().innerHTML+=`<div class="modal-bg fade" id="decModal"><div class="modal">
+    <h3>${isAppr?'Принять этап?':'Вернуть на доработку?'}</h3>
+    <p>${isAppr?'Этап будет помечен как принятый. Можно оставить комментарий аналитику.':'Этап вернётся аналитику. Опиши, что нужно доработать.'}</p>
+    <textarea id="decNote" placeholder="${isAppr?'Комментарий (необязательно)':'Что доработать…'}"></textarea>
+    <div style="display:flex;gap:10px"><button class="btn btn-ghost" onclick="closeDec()">Отмена</button>
+    <button class="btn ${isAppr?'btn-ok':'btn-warn'}" style="flex:1;justify-content:center" onclick="confirmDecide()">${isAppr?'Принять':'Вернуть'}</button></div>
+  </div></div>`;
+  setTimeout(()=>{const t=document.getElementById('decNote');if(t)t.focus();},50);
+};
+window.closeDec=function(){const m=document.getElementById('decModal');if(m)m.remove();};
+window.confirmDecide=async function(){
+  const {uid,pid,kind}=state._decision;
+  const note=(document.getElementById('decNote').value||'').trim();
+  closeDec();
+  root().innerHTML=loadingHTML('Сохраняю решение…');
+  // Reload the latest record before writing (reduces clobber; still last-write-wins)
+  const rec=await dbLoadOne(uid);
+  if(!rec){toast('Запись не найдена');state.roster=await dbLoadRoster();go('manager');return;}
+  rec.status[pid]=kind==='approve'?'done':'changes';
+  rec.review[pid]={by:state.mgr,at:Date.now(),decision:kind,note};
+  const ok=await dbSave(rec);
+  if(!ok)toast('Не удалось сохранить решение');
+  state.roster=await dbLoadRoster();
+  state.rec=state.roster.find(x=>x.uid===uid)||rec;
+  go('mgrDetail');
+};
+
+function timeAgo(ts){const d=Math.floor((Date.now()-ts)/1000);if(d<60)return 'только что';if(d<3600)return Math.floor(d/60)+' мин назад';if(d<86400)return Math.floor(d/3600)+' ч назад';return Math.floor(d/86400)+' дн назад';}
+
+function render(){const v=state.view;if(v==='login')return renderLogin();if(v==='diag')return renderDiag();if(v==='dash')return renderDash();if(v==='phase')return renderPhase();if(v==='manager')return renderManager();if(v==='mgrDetail')return renderMgrDetail();renderLogin();}
+boot();
+</script>
