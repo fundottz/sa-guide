@@ -1,9 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SA Architect Guide</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdn.jsdelivr.net">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600&display=swap">
-
-<div id="app"></div>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/tabler-icons.min.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+</head>
+<body>
+<div id="app">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F6F2EA;font-family:system-ui,sans-serif;color:#5C5448">
+    <div style="text-align:center"><div style="width:40px;height:40px;border:3px solid #E4DDD0;border-top-color:#0F6E56;border-radius:50%;animation:sp .7s linear infinite;margin:0 auto 16px"></div>Загрузка…</div>
+  </div>
+</div>
+<style>@keyframes sp{to{transform:rotate(360deg)}}</style>
 
 <style>
 :root{
@@ -242,8 +255,8 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--font-b);-we
 .diag-foot .cnt b{color:var(--ink);font-weight:600}
 </style>
 
-<script src="supabase.min.js"></script>
-<script>
+<script src="supabase.min.js" defer></script>
+<script defer>
 /* ============================================================
    НАСТРОЙКА: вставь сюда данные своего проекта Supabase.
    Берутся в Supabase → Project Settings → API.
@@ -714,3 +727,5 @@ function timeAgo(ts){const d=Math.floor((Date.now()-ts)/1000);if(d<60)return 'т
 function render(){const v=state.view;if(v==='login')return renderLogin();if(v==='diag')return renderDiag();if(v==='dash')return renderDash();if(v==='phase')return renderPhase();if(v==='manager')return renderManager();if(v==='mgrDetail')return renderMgrDetail();renderLogin();}
 boot();
 </script>
+</body>
+</html>
