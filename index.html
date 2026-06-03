@@ -253,6 +253,28 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--font-b);-we
 .diag-foot{position:sticky;bottom:0;background:var(--paper-2);border-top:1px solid var(--line);margin-top:18px;padding:14px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .diag-foot .cnt{font-size:13px;color:var(--ink-2)}
 .diag-foot .cnt b{color:var(--ink);font-weight:600}
+
+/* review form (manager) */
+.rv-obj{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:8px}
+.rv-obj.rv-ok{border-color:var(--teal-soft)}
+.rv-obj.rv-fail{border-color:var(--changes-soft)}
+.rv-obj-top{display:flex;align-items:flex-start;gap:12px}
+.rv-obj-tx{flex:1;font-size:13.5px;line-height:1.5}
+.rv-obj-tx b{font-weight:600}
+.rv-obj-analyst{font-size:11px;color:var(--ink-3);margin-top:4px}
+.rv-btns{display:flex;gap:0;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;flex-shrink:0}
+.rv-btns button{font-family:var(--font-b);font-size:12px;font-weight:500;padding:6px 12px;border:none;background:var(--paper-2);color:var(--ink-2);cursor:pointer;transition:.12s}
+.rv-btns button:first-child{border-right:1px solid var(--line)}
+.rv-btns button:hover{background:var(--paper)}
+.rv-btns button.rv-on-ok{background:var(--teal);color:#fff}
+.rv-btns button.rv-on-fail{background:var(--changes);color:#fff}
+.rv-comment{margin-top:10px}
+.rv-comment textarea{width:100%;font-family:var(--font-b);font-size:13px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper-2);resize:vertical;min-height:50px;outline:none;color:var(--ink)}
+.rv-summary{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-top:18px}
+.rv-summary textarea{width:100%;font-family:var(--font-b);font-size:13px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper-2);resize:vertical;min-height:60px;outline:none;color:var(--ink);margin-top:10px}
+.rv-summary .rv-actions{display:flex;gap:10px;margin-top:14px}
+.rv-fb{font-size:13px;color:var(--ink-2);margin-top:6px;line-height:1.5}
+.rv-fb-fail{color:var(--changes)}
 </style>
 
 <script src="supabase.min.js"></script>
@@ -485,7 +507,9 @@ function buildDemoData(){
     checked:[...PHASES[0].objectives.map(o=>o.id),...PHASES[1].objectives.slice(0,3).map(o=>o.id)],
     evidence:[[0,[{label:'ADR: выбор шины событий',url:'https://confluence.example.com/adr-001',at:Date.now()-30*86400000},{label:'C4 Level 2 — платёжный модуль',url:'https://miro.com/app/board/demo-c4',at:Date.now()-25*86400000}]],[1,[{label:'Requirements spec v1',url:'https://docs.google.com/document/d/demo-req',at:Date.now()-5*86400000}]]],
     statuses:[[0,'done'],[1,'progress']],
-    reviews:[[0,{by:'maria.ivanova@sa.team',at:Date.now()-20*86400000,decision:'approve',note:'Отличный старт, ADR чёткий. Двигайся дальше.'}]]
+    reviews:[[0,{by:'maria.ivanova@sa.team',at:Date.now()-20*86400000,decision:'approve',note:'Отличный старт, ADR чёткий. Двигайся дальше.',
+      objectives:{p0o0:{ok:true,comment:''},p0o1:{ok:true,comment:''},p0o2:{ok:true,comment:''},p0o3:{ok:true,comment:'Хороший первый ADR, в следующий раз добавь секцию Consequences'}},
+      artifacts:{0:{ok:true,comment:''},1:{ok:true,comment:''}}}]]
   });
 
   const peer1=demoRec('Ольга Сидорова','demo-2',{
@@ -493,7 +517,12 @@ function buildDemoData(){
     checked:[...PHASES[0].objectives.map(o=>o.id),...PHASES[1].objectives.map(o=>o.id),...PHASES[2].objectives.slice(0,2).map(o=>o.id)],
     evidence:[[0,[{label:'Stakeholder map',url:'https://miro.com/demo-sm',at:Date.now()-50*86400000}]],[1,[{label:'MoSCoW-приоритизация',url:'https://confluence.example.com/moscow',at:Date.now()-30*86400000}]],[2,[{label:'SDD черновик',url:'https://docs.google.com/document/d/demo-sdd',at:Date.now()-3*86400000}]]],
     statuses:[[0,'done'],[1,'done'],[2,'review']],
-    reviews:[[0,{by:'maria.ivanova@sa.team',at:Date.now()-45*86400000,decision:'approve',note:''}],[1,{by:'maria.ivanova@sa.team',at:Date.now()-20*86400000,decision:'approve',note:'Хорошая работа с требованиями.'}]]
+    reviews:[[0,{by:'maria.ivanova@sa.team',at:Date.now()-45*86400000,decision:'approve',note:'',
+      objectives:{p0o0:{ok:true,comment:''},p0o1:{ok:true,comment:''},p0o2:{ok:true,comment:''},p0o3:{ok:true,comment:''}},
+      artifacts:{0:{ok:true,comment:''}}}],
+    [1,{by:'maria.ivanova@sa.team',at:Date.now()-20*86400000,decision:'approve',note:'Хорошая работа с требованиями.',
+      objectives:{p1o0:{ok:true,comment:''},p1o1:{ok:true,comment:''},p1o2:{ok:true,comment:'Попробуй Kano в следующий раз'},p1o3:{ok:true,comment:''}},
+      artifacts:{0:{ok:true,comment:''}}}]]
   });
   peer1.baselinePct=18;
 
@@ -655,12 +684,35 @@ function renderPhase(){
     </div>
   </div>`;
 }
+function rvFeedbackHTML(rv,p){
+  if(!rv||(!rv.objectives&&!rv.note))return '';
+  let html='';
+  if(rv.objectives){
+    const objs=p.objectives.filter(o=>rv.objectives[o.id]);
+    const fails=objs.filter(o=>!rv.objectives[o.id].ok);
+    if(fails.length){
+      html+=`<div style="margin-top:10px"><div style="font-size:12px;font-weight:600;color:var(--ink-3);margin-bottom:6px">Замечания по целям:</div>`;
+      fails.forEach(o=>{const f=rv.objectives[o.id];html+=`<div class="rv-fb rv-fb-fail"><i class="ti ti-x" style="font-size:12px"></i> <b>${o.verb}</b> ${o.text}${f.comment?' — '+esc(f.comment):''}</div>`;});
+      html+=`</div>`;
+    }
+  }
+  if(rv.artifacts){
+    const artFails=Object.keys(rv.artifacts).filter(i=>!rv.artifacts[i].ok);
+    if(artFails.length){
+      html+=`<div style="margin-top:8px"><div style="font-size:12px;font-weight:600;color:var(--ink-3);margin-bottom:6px">Замечания по артефактам:</div>`;
+      const ev=p.id!=null?(state.rec.evidence[p.id]||[]):[];
+      artFails.forEach(i=>{const a=rv.artifacts[i];const e=ev[i];html+=`<div class="rv-fb rv-fb-fail"><i class="ti ti-x" style="font-size:12px"></i> ${e?esc(e.label||e.url):'Артефакт '+(+i+1)}${a.comment?' — '+esc(a.comment):''}</div>`;});
+      html+=`</div>`;
+    }
+  }
+  return html;
+}
 function reviewPanel(r,p,st){
   const ev=r.evidence[p.id]||[];
   const rv=r.review[p.id];
   if(st==='done'){
     return `<div class="rev rev-done"><h4><i class="ti ti-circle-check" style="color:var(--done)"></i> Этап принят</h4>
-    ${rv&&rv.note?`<div class="note">${esc(rv.note)}</div>`:''}<div class="by">Принял: ${esc(rv?rv.by:'—')}${rv&&rv.at?' · '+timeAgo(rv.at):''}</div></div>`;
+    ${rv&&rv.note?`<div class="note">${esc(rv.note)}</div>`:''}${rvFeedbackHTML(rv,p)}<div class="by">Принял: ${esc(rv?rv.by:'—')}${rv&&rv.at?' · '+timeAgo(rv.at):''}</div></div>`;
   }
   if(st==='review'){
     return `<div class="rev rev-review"><h4><i class="ti ti-clock-hour-4" style="color:var(--amber)"></i> На ревью у руководителя</h4>
@@ -672,7 +724,7 @@ function reviewPanel(r,p,st){
   let panel=`<div class="rev ${st==='changes'?'rev-changes':'rev-progress'}">`;
   if(st==='changes'&&rv){
     panel+=`<h4><i class="ti ti-arrow-back-up" style="color:var(--changes)"></i> Возвращено на доработку</h4>
-    ${rv.note?`<div class="note">${esc(rv.note)}</div>`:'<p>Ревьюер вернул этап без комментария.</p>'}<div class="by">Вернул: ${esc(rv.by)}${rv.at?' · '+timeAgo(rv.at):''}</div>`;
+    ${rv.note?`<div class="note">${esc(rv.note)}</div>`:'<p>Ревьюер вернул этап без комментария.</p>'}${rvFeedbackHTML(rv,p)}<div class="by">Вернул: ${esc(rv.by)}${rv.at?' · '+timeAgo(rv.at):''}</div>`;
   }else{
     panel+=`<h4><i class="ti ti-send" style="color:var(--teal)"></i> Отправка на ревью</h4><p>Когда все цели закрыты и приложены артефакты — отправь этап руководителю на проверку.</p>`;
   }
@@ -746,6 +798,138 @@ function renderManager(){
 function plural(n,a,b,c){const m=n%100,d=n%10;if(m>=11&&m<=14)return c;if(d===1)return a;if(d>=2&&d<=4)return b;return c;}
 window.refreshMgr=async function(){if(DEMO){toast('Демо-режим — данные тестовые');render();return;}root().innerHTML=loadingHTML('Обновляю…');state.roster=await loadRoster();render();};
 window.mgrPerson=function(uid){const r=state.roster.find(x=>x.uid===uid);if(r)go('mgrDetail',{rec:r});};
+window.reviewOpen=function(name,pid){
+  const r=state.roster.find(x=>x.name===name);
+  if(!r)return;
+  const p=PHASES[pid],ev=r.evidence[pid]||[];
+  state._rvDraft={uid:r.uid,pid,objectives:{},artifacts:{}};
+  p.objectives.forEach(o=>{state._rvDraft.objectives[o.id]={ok:null,comment:''};});
+  ev.forEach((_,i)=>{state._rvDraft.artifacts[i]={ok:null,comment:''};});
+  go('review',{rec:r,phase:pid});
+};
+window.openReviewFromDetail=function(uid,pid){
+  const r=state.roster.find(x=>x.uid===uid);
+  if(!r)return;
+  const p=PHASES[pid],ev=r.evidence[pid]||[];
+  state._rvDraft={uid:r.uid,pid,objectives:{},artifacts:{}};
+  p.objectives.forEach(o=>{state._rvDraft.objectives[o.id]={ok:null,comment:''};});
+  ev.forEach((_,i)=>{state._rvDraft.artifacts[i]={ok:null,comment:''};});
+  go('review',{rec:r,phase:pid});
+};
+
+/* ---------- review screen (manager) ---------- */
+function renderReview(){
+  const r=state.rec,pid=state.phase,p=PHASES[pid],A=ACCENT[p.accent];
+  const ev=r.evidence[pid]||[];
+  const d=state._rvDraft;
+  const allObj=p.objectives.every(o=>d.objectives[o.id]&&d.objectives[o.id].ok===true);
+  const allArt=ev.every((_,i)=>d.artifacts[i]&&d.artifacts[i].ok===true);
+  const canApprove=allObj&&allArt&&ev.length>0;
+
+  root().innerHTML=topbar()+`<div class="shell fade">${offlineBanner()}
+    <div class="detail-head">
+      <div class="crumb" onclick="go('mgrDetail',{rec:state.roster.find(x=>x.uid==='${r.uid}')})"><i class="ti ti-arrow-left" style="font-size:15px"></i> ${esc(r.name)}</div>
+      <div class="detail-banner">
+        <div class="pnum" style="background:${A.fill};color:${A.ink}">${p.id+1}</div>
+        <div><h2>Ревью: ${p.name}</h2>
+        <div class="meta"><div class="avatar" style="width:24px;height:24px;font-size:10px">${initials(r.name)}</div><span style="font-size:13px;color:var(--ink-2)">${esc(r.name)}</span></div></div>
+      </div>
+    </div>
+
+    <div class="sec"><div class="sec-title"><i class="ti ti-target" style="color:${A.bar};font-size:18px"></i> Учебные цели</div>
+    <div class="sec-hint">Проверь каждую цель — подтверди или оставь замечание</div>
+    ${p.objectives.map(o=>{
+      const od=d.objectives[o.id]||{ok:null,comment:''};
+      const cls=od.ok===true?'rv-ok':od.ok===false?'rv-fail':'';
+      const checked=r.checked[o.id];
+      return `<div class="rv-obj ${cls}" id="rvo-${o.id}">
+        <div class="rv-obj-top">
+          <div class="rv-obj-tx"><b>${o.verb}</b> ${o.text}
+            <div class="rv-obj-analyst"><i class="ti ti-${checked?'circle-check':'circle'}" style="font-size:11px"></i> аналитик: ${checked?'отмечено как освоенное':'не отмечено'}</div>
+          </div>
+          <div class="rv-btns">
+            <button class="${od.ok===true?'rv-on-ok':''}" onclick="setRvObj('${o.id}',true)"><i class="ti ti-check"></i></button>
+            <button class="${od.ok===false?'rv-on-fail':''}" onclick="setRvObj('${o.id}',false)"><i class="ti ti-x"></i></button>
+          </div>
+        </div>
+        ${od.ok===false?`<div class="rv-comment"><textarea placeholder="Что нужно доработать…" onchange="setRvObjComment('${o.id}',this.value)">${esc(od.comment)}</textarea></div>`:''}
+      </div>`;
+    }).join('')}</div>
+
+    <div class="sec"><div class="sec-title"><i class="ti ti-paperclip" style="color:${A.bar};font-size:18px"></i> Артефакты (${ev.length})</div>
+    <div class="sec-hint">Открой каждую ссылку, проверь содержимое</div>
+    ${ev.length?ev.map((e,i)=>{
+      const ad=d.artifacts[i]||{ok:null,comment:''};
+      const cls=ad.ok===true?'rv-ok':ad.ok===false?'rv-fail':'';
+      return `<div class="rv-obj ${cls}" id="rva-${i}">
+        <div class="rv-obj-top">
+          <div class="rv-obj-tx"><a href="${esc(e.url)}" target="_blank" rel="noopener" style="font-weight:600">${esc(e.label||e.url)}</a><br><small style="color:var(--ink-3)">${esc(e.url)}</small></div>
+          <div class="rv-btns">
+            <button class="${ad.ok===true?'rv-on-ok':''}" onclick="setRvArt(${i},true)"><i class="ti ti-check"></i></button>
+            <button class="${ad.ok===false?'rv-on-fail':''}" onclick="setRvArt(${i},false)"><i class="ti ti-x"></i></button>
+          </div>
+        </div>
+        ${ad.ok===false?`<div class="rv-comment"><textarea placeholder="Что не так с артефактом…" onchange="setRvArtComment(${i},this.value)">${esc(ad.comment)}</textarea></div>`:''}
+      </div>`;
+    }).join(''):'<div class="ev-empty">Артефакты не приложены</div>'}</div>
+
+    <div class="rv-summary">
+      <h4><i class="ti ti-send" style="color:var(--teal)"></i> Итог проверки</h4>
+      <textarea id="rvNote" placeholder="Общий комментарий (необязательно)"></textarea>
+      <div class="rv-actions">
+        <button class="btn btn-warn" onclick="submitReview('changes')"><i class="ti ti-arrow-back-up"></i> На доработку</button>
+        <button class="btn btn-ok" style="flex:1;justify-content:center" ${canApprove?'':`disabled title="Подтверди все цели и артефакты"`} onclick="submitReview('approve')"><i class="ti ti-check"></i> Принять этап</button>
+      </div>
+    </div>
+    <div style="padding-bottom:50px"></div>
+  </div>`;
+}
+window.setRvObj=function(id,ok){
+  if(!state._rvDraft)return;
+  state._rvDraft.objectives[id].ok=ok;
+  renderReview();
+};
+window.setRvObjComment=function(id,val){
+  if(!state._rvDraft)return;
+  state._rvDraft.objectives[id].comment=val;
+};
+window.setRvArt=function(idx,ok){
+  if(!state._rvDraft)return;
+  state._rvDraft.artifacts[idx].ok=ok;
+  renderReview();
+};
+window.setRvArtComment=function(idx,val){
+  if(!state._rvDraft)return;
+  state._rvDraft.artifacts[idx].comment=val;
+};
+window.submitReview=async function(decision){
+  const d=state._rvDraft;if(!d)return;
+  const note=(document.getElementById('rvNote')||{}).value||'';
+  const review={by:state.mgr,at:Date.now(),decision,note:note.trim(),objectives:{},artifacts:{}};
+  Object.keys(d.objectives).forEach(id=>{
+    const o=d.objectives[id];
+    if(o.ok!==null)review.objectives[id]={ok:o.ok,comment:o.comment||''};
+  });
+  Object.keys(d.artifacts).forEach(i=>{
+    const a=d.artifacts[i];
+    if(a.ok!==null)review.artifacts[i]={ok:a.ok,comment:a.comment||''};
+  });
+  if(DEMO){
+    const rec=state.roster.find(x=>x.uid===d.uid);
+    if(rec){rec.status[d.pid]=decision==='approve'?'done':'changes';rec.review[d.pid]=review;}
+    state.rec=rec;toast('Демо-режим — изменения не сохраняются');go('mgrDetail');return;
+  }
+  root().innerHTML=loadingHTML('Сохраняю решение…');
+  const rec=await dbLoadOne(d.uid);
+  if(!rec){toast('Запись не найдена');state.roster=await dbLoadRoster();go('manager');return;}
+  rec.status[d.pid]=decision==='approve'?'done':'changes';
+  rec.review[d.pid]=review;
+  const ok=await dbSave(rec);
+  if(!ok)toast('Не удалось сохранить решение');
+  state.roster=await dbLoadRoster();
+  state.rec=state.roster.find(x=>x.uid===d.uid)||rec;
+  go('mgrDetail');
+};
 
 function renderMgrDetail(){
   const r=state.rec,tot=countAll(r),pct=Math.round(tot/TOTAL*100),ap=approvedCount(r);
@@ -760,7 +944,7 @@ function renderMgrDetail(){
         <div style="font-size:12px;font-weight:600;color:var(--ink-3);margin:10px 0 6px">Артефакты (${ev.length})</div>
         ${ev.length?ev.map(e=>`<div class="ev-item"><div class="ev-ic"><i class="ti ti-link"></i></div><div class="ev-body"><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.label||e.url)}</a><small>${esc(e.url)}</small></div></div>`).join(''):'<div class="ev-empty" style="padding:11px">Артефакты не приложены</div>'}
         ${rv&&rv.note?`<div class="note">${esc(rv.note)}</div><div class="by">${st==='done'?'Принял':'Вернул'}: ${esc(rv.by)}${rv.at?' · '+timeAgo(rv.at):''}</div>`:''}
-        ${st==='review'?`<div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ok btn-sm" onclick="decide('${r.uid}',${p.id},'approve')"><i class="ti ti-check"></i> Принять этап</button><button class="btn btn-warn btn-sm" onclick="decide('${r.uid}',${p.id},'changes')"><i class="ti ti-arrow-back-up"></i> На доработку</button></div>`:''}
+        ${st==='review'?`<div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ok btn-sm" onclick="openReviewFromDetail('${r.uid}',${p.id})"><i class="ti ti-eye"></i> Проверить этап</button></div>`:''}
       </div>`;
     }).join('')}
     <div style="padding-bottom:50px"></div></div>`;
@@ -802,7 +986,7 @@ window.confirmDecide=async function(){
 
 function timeAgo(ts){const d=Math.floor((Date.now()-ts)/1000);if(d<60)return 'только что';if(d<3600)return Math.floor(d/60)+' мин назад';if(d<86400)return Math.floor(d/3600)+' ч назад';return Math.floor(d/86400)+' дн назад';}
 
-function render(){const v=state.view;if(v==='login')return renderLogin();if(v==='diag')return renderDiag();if(v==='dash')return renderDash();if(v==='phase')return renderPhase();if(v==='manager')return renderManager();if(v==='mgrDetail')return renderMgrDetail();renderLogin();}
+function render(){const v=state.view;if(v==='login')return renderLogin();if(v==='diag')return renderDiag();if(v==='dash')return renderDash();if(v==='phase')return renderPhase();if(v==='manager')return renderManager();if(v==='mgrDetail')return renderMgrDetail();if(v==='review')return renderReview();renderLogin();}
 boot();
 </script>
 </body>
