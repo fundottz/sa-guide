@@ -342,6 +342,7 @@ async function dbIsReviewer(){ try{const {data}=await SB.from('reviewers').selec
 async function loadRoster(){ return await dbLoadRoster(); }
 
 let state={view:'login',role:null,uid:null,email:null,isReviewer:false,name:null,mgr:'',rec:null,phase:null,roster:[],syncing:false,syncFail:false};
+let DEMO=false;
 
 function blankRec(name,uid){return {uid,name,started:Date.now(),updated:Date.now(),checked:{},evidence:{},status:{},review:{},baseline:null,baselinePct:null};}
 
@@ -357,6 +358,7 @@ const root=()=>document.getElementById('app');
 function toast(m){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t);}t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1900);}
 function setSync(s){state.syncing=s==='saving';state.syncFail=s==='off';const el=document.getElementById('syncPill');if(el)el.outerHTML=syncPill();}
 function syncPill(){
+  if(DEMO)return `<span class="sync off" id="syncPill"><i class="ti ti-eye"></i>демо</span>`;
   if(!DBLIVE)return `<span class="sync off" id="syncPill"><i class="ti ti-cloud-off"></i>не настроено</span>`;
   if(state.syncing)return `<span class="sync saving" id="syncPill"><i class="ti ti-loader-2"></i>сохраняю…</span>`;
   if(state.syncFail)return `<span class="sync off" id="syncPill"><i class="ti ti-cloud-off"></i>не сохранилось</span>`;
@@ -366,6 +368,7 @@ function syncPill(){
 let saveTimer=null;
 function queueSave(){
   if(!state.rec)return;
+  if(DEMO){toast('Демо-режим — изменения не сохраняются');return;}
   setSync('saving');
   clearTimeout(saveTimer);
   saveTimer=setTimeout(async()=>{
@@ -393,6 +396,11 @@ function renderLogin(){
       <input id="liPw" type="password" placeholder="пароль" autocomplete="current-password" style="width:100%;font-family:var(--font-b);font-size:15px;padding:12px 14px;border:1px solid var(--line-2);border-radius:11px;background:var(--card);margin-bottom:14px;outline:none;color:var(--ink)"/>
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">Войти <i class="ti ti-arrow-right"></i></button>
       <p style="font-size:12px;color:var(--ink-3);margin-top:14px;line-height:1.5">Аккаунты заводит руководитель в панели Supabase. Если не можешь войти — обратись к нему.</p>
+      <div style="border-top:1px solid var(--line);margin-top:20px;padding-top:16px;text-align:center">
+        <p style="font-size:13px;color:var(--ink-3);margin-bottom:10px">Хочешь сначала посмотреть, как это работает?</p>
+        <a href="#demo" class="btn btn-sm" style="margin-right:8px" onclick="location.hash='demo';location.reload()"><i class="ti ti-eye"></i> Демо: аналитик</a>
+        <a href="#demo-mgr" class="btn btn-sm" onclick="location.hash='demo-mgr';location.reload()"><i class="ti ti-users"></i> Демо: руководитель</a>
+      </div>
     </div>
   </div>`;
   setTimeout(()=>{const e=document.getElementById('liEmail');if(e){e.focus();const pw=document.getElementById('liPw');pw.onkeydown=ev=>{if(ev.key==='Enter')doLogin();};}},50);
@@ -442,8 +450,12 @@ window.signOut=async function(){
   state={view:'login',role:null,uid:null,email:null,isReviewer:false,name:null,mgr:'',rec:null,phase:null,roster:[],syncing:false,syncFail:false};
   renderLogin();
 };
+window.exitDemo=function(){location.hash='';location.reload();};
 window.goHome=function(){ if(state.role==='manager')go('manager'); else go('dash'); };
 async function boot(){
+  const h=location.hash.replace('#','');
+  if(h==='demo'){bootDemo(false);return;}
+  if(h==='demo-mgr'){bootDemo(true);return;}
   if(!DBLIVE){ renderConfigError(); return; }
   root().innerHTML=loadingHTML('Подключаюсь…');
   try{
@@ -452,9 +464,68 @@ async function boot(){
   }catch(e){ toast('Нет связи с базой'); renderLogin(); }
 }
 
+/* ---------- demo mode ---------- */
+function demoRec(name,uid,profile){
+  const r=blankRec(name,uid);
+  r.started=Date.now()-profile.days*86400000;
+  if(profile.diag){r.baseline=profile.diag;r.baselinePct=Math.round(Object.values(profile.diag).filter(v=>v==='yes').length/TOTAL*100);}
+  (profile.checked||[]).forEach(id=>{r.checked[id]=true;});
+  (profile.evidence||[]).forEach(([pid,evs])=>{r.evidence[pid]=evs;});
+  (profile.statuses||[]).forEach(([pid,st])=>{r.status[pid]=st;});
+  (profile.reviews||[]).forEach(([pid,rv])=>{r.review[pid]=rv;});
+  return r;
+}
+function buildDemoData(){
+  const diag0={};ALL_IDS.forEach(id=>{diag0[id]='no';});
+  PHASES[0].objectives.forEach(o=>{diag0[o.id]='yes';});
+  PHASES[1].objectives.slice(0,2).forEach(o=>{diag0[o.id]='partial';});
+
+  const me=demoRec('Алексей Петров','demo-1',{
+    days:47,diag:diag0,
+    checked:[...PHASES[0].objectives.map(o=>o.id),...PHASES[1].objectives.slice(0,3).map(o=>o.id)],
+    evidence:[[0,[{label:'ADR: выбор шины событий',url:'https://confluence.example.com/adr-001',at:Date.now()-30*86400000},{label:'C4 Level 2 — платёжный модуль',url:'https://miro.com/app/board/demo-c4',at:Date.now()-25*86400000}]],[1,[{label:'Requirements spec v1',url:'https://docs.google.com/document/d/demo-req',at:Date.now()-5*86400000}]]],
+    statuses:[[0,'done'],[1,'progress']],
+    reviews:[[0,{by:'maria.ivanova@sa.team',at:Date.now()-20*86400000,decision:'approve',note:'Отличный старт, ADR чёткий. Двигайся дальше.'}]]
+  });
+
+  const peer1=demoRec('Ольга Сидорова','demo-2',{
+    days:62,diag:{},
+    checked:[...PHASES[0].objectives.map(o=>o.id),...PHASES[1].objectives.map(o=>o.id),...PHASES[2].objectives.slice(0,2).map(o=>o.id)],
+    evidence:[[0,[{label:'Stakeholder map',url:'https://miro.com/demo-sm',at:Date.now()-50*86400000}]],[1,[{label:'MoSCoW-приоритизация',url:'https://confluence.example.com/moscow',at:Date.now()-30*86400000}]],[2,[{label:'SDD черновик',url:'https://docs.google.com/document/d/demo-sdd',at:Date.now()-3*86400000}]]],
+    statuses:[[0,'done'],[1,'done'],[2,'review']],
+    reviews:[[0,{by:'maria.ivanova@sa.team',at:Date.now()-45*86400000,decision:'approve',note:''}],[1,{by:'maria.ivanova@sa.team',at:Date.now()-20*86400000,decision:'approve',note:'Хорошая работа с требованиями.'}]]
+  });
+  peer1.baselinePct=18;
+
+  const peer2=demoRec('Дмитрий Козлов','demo-3',{
+    days:14,diag:{},
+    checked:PHASES[0].objectives.slice(0,2).map(o=>o.id),
+    evidence:[],statuses:[],reviews:[]
+  });
+  peer2.baselinePct=0;
+
+  return {me,roster:[me,peer1,peer2]};
+}
+function bootDemo(asMgr){
+  DEMO=true;
+  const {me,roster}=buildDemoData();
+  if(asMgr){
+    state.role='manager';state.mgr='maria.ivanova@sa.team';state.uid='demo-mgr';
+    state.email='maria.ivanova@sa.team';state.isReviewer=true;
+    state.roster=roster;state.name='Мария Иванова';state.rec=roster[0];
+    go('manager');
+  }else{
+    state.role='analyst';state.uid='demo-1';state.email='a.petrov@sa.team';
+    state.name=me.name;state.rec=me;state.isReviewer=false;
+    go('dash');
+  }
+}
+
 /* ---------- topbar ---------- */
 function topbar(){
-  const out=`<button class="btn btn-sm btn-ghost" onclick="signOut()" title="Выйти"><i class="ti ti-logout"></i></button>`;
+  const out=DEMO
+    ?`<button class="btn btn-sm btn-ghost" onclick="exitDemo()" title="Выйти из демо"><i class="ti ti-x"></i> Выйти из демо</button>`
+    :`<button class="btn btn-sm btn-ghost" onclick="signOut()" title="Выйти"><i class="ti ti-logout"></i></button>`;
   const right=state.role==='analyst'
     ? `${syncPill()}<div class="who"><div class="avatar">${initials(state.name)}</div>${esc(state.name)}</div>${out}`
     : `<div class="who"><div class="avatar" style="background:var(--amber-soft);color:var(--amber)"><i class="ti ti-checklist" style="font-size:14px"></i></div>${esc(state.mgr)}</div>${out}`;
@@ -463,7 +534,10 @@ function topbar(){
     <div class="brand-txt">Путь к архитектору<small>SA → Solution Architect</small></div></div>
     <div class="topright">${right}</div></div></div>`;
 }
-function offlineBanner(){ return ''; }
+function offlineBanner(){
+  if(DEMO)return `<div style="background:var(--plum-soft);color:var(--plum);font-size:13px;font-weight:500;padding:8px 14px;border-radius:10px;margin-bottom:18px;display:flex;align-items:center;gap:8px"><i class="ti ti-eye" style="font-size:15px"></i> Демо-режим с тестовыми данными. Изменения не сохраняются. <a href="#${state.role==='manager'?'demo':'demo-mgr'}" onclick="location.hash=this.getAttribute('href').slice(1);location.reload();return false" style="color:var(--plum);margin-left:auto;white-space:nowrap;text-decoration:underline">Переключить на ${state.role==='manager'?'аналитика':'руководителя'}</a></div>`;
+  return '';
+}
 
 /* ---------- diagnostic ---------- */
 function renderDiag(){
@@ -670,7 +744,7 @@ function renderManager(){
   </div>`;
 }
 function plural(n,a,b,c){const m=n%100,d=n%10;if(m>=11&&m<=14)return c;if(d===1)return a;if(d>=2&&d<=4)return b;return c;}
-window.refreshMgr=async function(){root().innerHTML=loadingHTML('Обновляю…');state.roster=await loadRoster();render();};
+window.refreshMgr=async function(){if(DEMO){toast('Демо-режим — данные тестовые');render();return;}root().innerHTML=loadingHTML('Обновляю…');state.roster=await loadRoster();render();};
 window.mgrPerson=function(uid){const r=state.roster.find(x=>x.uid===uid);if(r)go('mgrDetail',{rec:r});};
 
 function renderMgrDetail(){
@@ -709,8 +783,12 @@ window.confirmDecide=async function(){
   const {uid,pid,kind}=state._decision;
   const note=(document.getElementById('decNote').value||'').trim();
   closeDec();
+  if(DEMO){
+    const rec=state.roster.find(x=>x.uid===uid);
+    if(rec){rec.status[pid]=kind==='approve'?'done':'changes';rec.review[pid]={by:state.mgr,at:Date.now(),decision:kind,note};}
+    state.rec=rec;toast('Демо-режим — изменения не сохраняются');go('mgrDetail');return;
+  }
   root().innerHTML=loadingHTML('Сохраняю решение…');
-  // Reload the latest record before writing (reduces clobber; still last-write-wins)
   const rec=await dbLoadOne(uid);
   if(!rec){toast('Запись не найдена');state.roster=await dbLoadRoster();go('manager');return;}
   rec.status[pid]=kind==='approve'?'done':'changes';
